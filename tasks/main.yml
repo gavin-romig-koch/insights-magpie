@@ -1,0 +1,5 @@
+---
+# tasks file for insights-magpie
+- magpie:
+- debug: msg="{{ gavin_facts }}"
+
