@@ -1,3 +1,0 @@
-    - hosts: cato
-      roles:
-         - { role: insights-magpie }
