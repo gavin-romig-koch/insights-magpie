@@ -1,4 +1,3 @@
 ---
 # tasks file for insights-magpie
 - magpie:
-- debug: msg="{{ insights_upload_results.reports }}"
