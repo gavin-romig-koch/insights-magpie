@@ -52,7 +52,7 @@ class constants(object):
     default_conf_file_name = app_name + '.conf'
     default_conf_file = os.path.join(default_conf_dir, default_conf_file_name)
     default_sed_file = os.path.join(default_conf_dir, '.exp.sed')
-    default_ca_file = os.path.join(default_conf_dir, 'cert-api.access.redhat.com.pem')
+    default_ca_file = "false" #os.path.join(default_conf_dir, 'cert-api.access.redhat.com.pem')
     base_url = 'cert-api.access.redhat.com/r/insights'
     collection_rules_file = os.path.join(default_conf_dir, '.cache.json')
     collection_fallback_file = os.path.join(default_conf_dir, '.fallback.json')

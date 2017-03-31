@@ -1,0 +1,57 @@
+
+- since modules can't do inports, need to have a build system
+   that builds the actual modules from seperate files
+    - read the current uploader.json and produce the action and library module
+    - also have a mechinism for includeing arbitrary but idiomatic python to 
+        collect arbitrary facts.
+- run the ansible module testing thing
+- test with ansible devel branch and ansible shipped on RHEL
+- need to be sure that all the imports used are just from the standard
+   python library
+  - virtualenv
+- add comparison to last run to test.sh
+- add comparison of 'skipped' to test.sh
+- add standard testing across the board
+- fix documentation for both modules
+- fact name should be based on spec name, not archive file name
+- fix _make_sed_cmd to check if default_sed_file exists, use it if it does,
+     but use constant command line if it does not     
+- split into two differently named modules
+  - come up with names for both modules
+  - one collects but doesn't send to red hat
+     this one only outputs collected facts
+  - one runs the collector and sends to red hat
+     this one outputs collected facts, but also the rule results
+     returned as facts
+- default_ca_file (and anything that uses it)
+  This file contains a cert that the client uses to verify that the server is valid.
+  We currently set it to false which means that the client doesn't verify the server.
+  Instead we should check to see if the cert exists on the control machine, and
+  verify the server if it exists.
+- figure out what to do about rhsm cert
+  - what do other bits of software do, what does the RHSM documentation say to do
+     - is the rhsm cert only for use on registered machines or can one get an rhsm cert
+       for an organization that can be installed anywhere in an organization and used
+       for commuinicating with the portal?
+  - the current client calls into some rhsm supplied code to get the names of
+    two files that it passes on to the http request code
+- handle 'pre-commands' 
+- move do_upload failure messages out of log and into Ansible failure results
+- move do_upload results out of 'log' and into returned facts
+- rewrite 'test_connection' to return results in stderr (or stderr)
+- figure out what to do about logging during fact collection
+  - the current collector does a lot of logging during collection, while collection
+    commands are running, and then ships that log back with the archive.
+    So during fact collection, log stuff to ansible normally, and then capture those
+    logs in the action_plugin, and put them in the archive.
+- get rid of the ansible_main vs main in library/main
+- output collected facts as well as rule results
+- take config information from module options
+   - correct the ansible argument parser in library
+- auto register and auto create systems
+    (re-verifiy that we don't have to worry duplicate UUIDs)
+- handle sat5 branch_info
+- specs black/white lists
+   - honor existing black/white lists on individual hosts
+   - have a mechinism for black/white list in ansible (on control machine)
+     
