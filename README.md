@@ -46,7 +46,7 @@ Once the magpie action plugin runs it will define the fact:
 Example Playbook
 ----------------
 
-  In magpie_example.yml:
+  In insights-magpie-example.yml:
   
     ```yaml
     - hosts: all
@@ -56,7 +56,7 @@ Example Playbook
          - debug: msg="{{ insights_upload_results.reports }}"
     ```
     
-  In portal_creds.yml: (where XXXX and YYYYY are replaced with Red Hat Portal credentials)
+  In redhat-portal-creds.yml: (where XXXX and YYYYY are replaced with Red Hat Portal credentials)
 
     ```yaml
     redhat_portal_username: XXXXXX
@@ -68,7 +68,7 @@ Example Playbook
   those results.
 
     ```bash
-    ansible-playbook --limit myhost.example.com --extra-vars @portal_creds.yml magpie_example.yml
+    ansible-playbook --limit myhost.example.com --extra-vars @redhat-portal-creds.yml insights-magpie-example.yml
     ```
     
 License
