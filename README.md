@@ -14,7 +14,7 @@ The action plugin runs on the control machine.  It captures the facts returned b
 the Red Hat Insights service for analysis, and then presents that analysis back to the running playbook as 
 another Ansible fact.
 
-If you know what Insights is, and would like to try out this role, but need some help with Ansible, [try here](https://github.com/gavin-romig-koch/insights-magpie/wiki/Just-Enough-about-Ansible-to-Use-insights-magpie).
+If you know what Insights is, and would like to try out this role, but need some help with Ansible: [Just Enough Ansible to Use insights-magpie](https://github.com/gavin-romig-koch/insights-magpie/wiki/Just-Enough-about-Ansible-to-Use-insights-magpie).
 
 Requirements
 ------------
