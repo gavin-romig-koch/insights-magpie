@@ -47,29 +47,25 @@ Example Playbook
 ----------------
 
   In insights-magpie-example.yml:
-  
-    ```yaml
+
     - hosts: all
       roles:
          - { role: gavin-romig-koch.insights-magpie }
       tasks:
          - debug: msg="{{ insights_upload_results.reports }}"
-    ```
+    
     
   In redhat-portal-creds.yml: (where XXXX and YYYYY are replaced with Red Hat Portal credentials)
 
-    ```yaml
     redhat_portal_username: XXXXXX
     redhat_portal_password: YYYYYY
-    ```
     
   Then this will collect Insights data from 'myhost.example.com', submit that data to 
   Red Hat Insights saving the results in the fact insights_upload_results, and then print out 
   those results.
 
-    ```bash
     ansible-playbook --limit myhost.example.com --extra-vars @redhat-portal-creds.yml insights-magpie-example.yml
-    ```
+ 
     
 License
 -------
