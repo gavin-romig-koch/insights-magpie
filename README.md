@@ -75,4 +75,4 @@ BSD
 Author Information
 ------------------
 
-The Ansible module and action plugin were written by Gavin Romig-Koch, based largely on the original insights-client by Richard Brantley, Jeremy Crafts, and Dan Varga.
+The Ansible module and action plugin were written by Gavin Romig-Koch, based largely on the original redhat-access-insights/insights-client by Richard Brantley, Jeremy Crafts, and Dan Varga.
