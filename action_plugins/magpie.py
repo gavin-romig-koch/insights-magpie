@@ -170,6 +170,18 @@ def write_data_to_file(data, filepath):
     with open(filepath, 'w') as _file:
         _file.write(data)
 
+def magic_plan_b(filename):
+    '''
+    Use this in instances where
+    python-magic is MIA and can't be installed
+    for whatever reason
+    '''
+    cmd = shlex.split('file --mime-type --mime-encoding ' + filename)
+    stdout, stderr = Popen(cmd, stdout=subprocess.PIPE).communicate()
+    mime_str = stdout.split(filename + ': ')[1].strip()
+    return mime_str
+
+
 class DefaultArgument:
     pass        
 
@@ -858,7 +870,6 @@ class InsightsConnection(object):
         except ImportError:
             magic = None
             logger.debug('python-magic not installed, using backup function...')
-            from utilities import magic_plan_b
             mime_type = magic_plan_b(data_collected)
 
         fo = open(data_collected, 'rb')
