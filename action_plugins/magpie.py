@@ -177,7 +177,7 @@ def magic_plan_b(filename):
     for whatever reason
     '''
     cmd = shlex.split('file --mime-type --mime-encoding ' + filename)
-    stdout, stderr = Popen(cmd, stdout=subprocess.PIPE).communicate()
+    stdout, stderr = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()
     mime_str = stdout.split(filename + ': ')[1].strip()
     return mime_str
 
@@ -863,7 +863,7 @@ class InsightsConnection(object):
         """
         file_name = os.path.basename(data_collected)
         try:
-            import magic
+            import xmagic
             m = magic.open(magic.MAGIC_MIME)
             m.load()
             mime_type = m.file(data_collected)
