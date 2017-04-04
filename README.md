@@ -19,7 +19,7 @@ If you know what Insights is, and would like to try out this role, but need some
 Requirements
 ------------
 
-The Ansible controll machine must have 'tar' installed.   
+The Ansible control machine must have 'tar' installed.   
 
 The target machines must already be registered with the Red Hat Insights service.  Currently the easiest 
 (perhaps only) way to do this is to install the Insights Collector (redhat-access-insights/insights-client)
