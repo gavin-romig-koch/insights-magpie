@@ -148,7 +148,7 @@ SAVED_MACHINE_ID = None
 
 def generate_machine_id(new=False, docker_group=False):
     """
-    We can't (yet) do registration, so 
+    We can't (yet) do registration, so
     we can only do systems that already have a machine-id
     /etc/insights-client/machine-id
     """
@@ -183,7 +183,7 @@ def magic_plan_b(filename):
 
 
 class DefaultArgument:
-    pass        
+    pass
 
 class InsightsConnection(object):
 
@@ -195,7 +195,7 @@ class InsightsConnection(object):
         self.user_agent = constants.user_agent
         self.username = username if username != DefaultArgument else InsightsClient.config.get(APP_NAME, "username")
         self.password = password if password != DefaultArgument else InsightsClient.config.get(APP_NAME, "password")
-        
+
         self.cert_verify = InsightsClient.config.get(APP_NAME, "cert_verify")
         if self.cert_verify.lower() == 'false':
             self.cert_verify = False
@@ -655,6 +655,9 @@ class InsightsConnection(object):
             raise LookupError
         branch_info = branch_info.json()
 
+        if 'remote_branch' not in branch_info or 'remote_leaf' not in branch_info:
+            raise LookupError
+
         # Determine if we are connected to Satellite 5
         if ((branch_info['remote_branch'] is not -1 and
              branch_info['remote_leaf'] is -1)):
@@ -873,7 +876,7 @@ class InsightsConnection(object):
             mime_type = magic_plan_b(data_collected)
 
         fo = open(data_collected, 'rb')
-            
+
         files = {
             'file': (file_name, fo, mime_type)}
 
@@ -883,7 +886,7 @@ class InsightsConnection(object):
             upload_url = self.upload_url + '/' + generate_machine_id()
 
         logger.debug("Uploading %s to %s", data_collected, upload_url)
-        
+
         headers = {'x-rh-collection-time': duration}
         upload = self.session.post(upload_url, files=files, headers=headers)
 
@@ -1079,7 +1082,7 @@ def _do_upload(pconn, tar_file, logging_name, collection_duration, result):
 def _delete_archive(archive):
     #archive.delete_tmp_dir()
     pass
-    
+
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
@@ -1103,13 +1106,13 @@ class ActionModule(ActionBase):
                 SAVED_MACHINE_ID = result['ansible_facts']['magpie_etc/redhat-access-insights/machine-id']
         if not SAVED_MACHINE_ID:
             return dict(failed=True, msg="Not registered with Insights: no machine-id")
-        
+
         InsightsClient.config = parse_config_file(constants.default_conf_file)
 
         username=task_vars.get('redhat_portal_username', DefaultArgument)
         password=task_vars.get('redhat_portal_password', DefaultArgument)
-        
-        
+
+
         hostname = "cato"
         logging_name = hostname
         collection_duration = "0.0000"
@@ -1126,11 +1129,22 @@ class ActionModule(ActionBase):
                     logger.error("system exit called with non zero result")
                     logger.error(exc)
             return {}
-        
+
         pconn = InsightsConnection(
             username=username,
             password=password,
         )
+
+        try:
+            branch_info = pconn.branch_info()
+        except requests.ConnectionError:
+            return dict(failed=True, msg="Could not connect to Insights")
+        except LookupError:
+            message = "Could not log into Insights"
+            if 'redhat_portal_username' not in task_vars or 'redhat_portal_password' not in task_vars  :
+                message += ", 'redhat_portal_username' and/or 'redhat_portal_password' not set."
+            return dict(failed=True, msg=message)
+
         if 'ansible_facts' in result:
             if 'magpie_branch_info' in result['ansible_facts']:
                 logger.debug('Incomming BRANCH %s' % result['ansible_facts']['magpie_branch_info'])
@@ -1144,9 +1158,7 @@ class ActionModule(ActionBase):
             for (k,v) in result['ansible_facts'].items():
                 if k.startswith(key_start_to_look_for):
                     write_data_to_file(v, archive.get_full_archive_path(k[len(key_start_to_look_for):]))
-        write_data_to_file(json.dumps(pconn.branch_info()), archive.get_full_archive_path("branch_info"))
+        write_data_to_file(json.dumps(branch_info), archive.get_full_archive_path("branch_info"))
         tar_file = archive.create_tar_file()
 
         return _do_upload(pconn, tar_file, logging_name, collection_duration, result)
-
-
