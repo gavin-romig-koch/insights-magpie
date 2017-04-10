@@ -1,0 +1,7 @@
+---
+- hosts: all
+  remote_user: root
+  roles:
+    - insights-magpie
+  tasks:
+    - debug: msg="{{ insights_upload_results.reports }}"
