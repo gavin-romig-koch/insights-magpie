@@ -1,4 +1,5 @@
 
+
 - RPM installation of skelleton that installs scripts that act like current
   client, but actually use magpie
 - download specs file from server, look for specs file on target machine and
