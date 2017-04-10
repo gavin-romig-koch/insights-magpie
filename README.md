@@ -68,7 +68,23 @@ Example Playbook
 
     ansible-playbook --limit myhost.example.com --extra-vars @redhat-portal-creds.yml insights-magpie-example.yml
  
-    
+Testing during Development
+--------------------------
+
+If you have a copy of the source, you can test your changes in several ways.
+
+The playbook local_module_test.yml, if run in the source tree, will pick up the module from the
+source tree.  It can be used to test your changes before committing them. See the playbook for
+usage.
+
+The file .travis.yml and the files in tests/ are used by Travis for testing after push, although
+they can be used locally by 'hand' executing the steps in .travis.yml
+
+The shell script test_README_EXAMPLE.sh is a script that does exactly what the Example Playbook
+section above does, so it tests the role and modules from Galaxy.  See the script for usage.
+
+
+
 License
 -------
 

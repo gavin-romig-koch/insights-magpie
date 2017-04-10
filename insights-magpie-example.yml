@@ -1,0 +1,5 @@
+- hosts: all
+  roles:
+     - { role: gavin-romig-koch.insights-magpie }
+  tasks:
+     - debug: msg="{{ insights_upload_results.reports }}"
