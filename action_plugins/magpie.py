@@ -682,8 +682,6 @@ class InsightsConnection(object):
             logger.error(
                 "ERROR: Could not determine branch information, exiting!")
             logger.error(
-                "See %s for more information", constants.default_log_file)
-            logger.error(
                 "Could not register system, running configuration test")
             self.test_connection(1)
 
@@ -691,8 +689,6 @@ class InsightsConnection(object):
             logger.debug(e)
             logger.error(
                 "ERROR: Could not determine branch information, exiting!")
-            logger.error(
-                "See %s for more information", constants.default_log_file)
             logger.error(
                 "Could not register system, running configuration test")
             self.test_connection(1)
@@ -904,31 +900,55 @@ class InsightsArchive(object):
 
     def __init__(self, compressor="gz", target_name=None):
         """
-        Initialize the Insights Archive
-        Create temp dir, archive dir, and command dir
+        Archive creation proceeds in two steps: data collection followed by actual archive creation.
+
+        During data collection, data is collected into a directory tree, each command's output,
+        and each files copy, is written to it's own special place in this directory tree according
+        to it's spec information.
+
+        Once all the data is collected for all specs, a tar file is created from the directory tree,
+        after which the directory tree is deleted.
+
+        The name of the directory tree and the main name of the tar file are the same: 
+        **archive_name** which needs to follow a predictable pattern so the Insights Server can
+        parse it.
+
+        To prevent attacks based on being able to guess **archive_name**, both the directory
+        tree and the actual tar file are created in mkdtemp created directories.  To keep 
+        compatibility with the archives expected by the Insights server, the archive tar 
+        command needs to start the archive with '.', all the file names stored in the archive start
+        with the directory '.', so the directory tree and archive itself must be in separate mkdtemp 
+        directories:
+
+        **tree_tmp_dir** is the mkdtemp directory which holds the directory tree, and only the
+        directory tree.  The directory tree is accessed directly as **tree_dir**.
+
+        **tar_tmp_dir** is the mkdtemp directory which holds the tar file.
+
         """
-        self.tmp_dir = tempfile.mkdtemp(prefix='/var/tmp/')
+        self.tar_tmp_dir = tempfile.mkdtemp(prefix='/var/tmp/')
+        self.tree_tmp_dir = tempfile.mkdtemp(prefix='/var/tmp/')
         name = determine_hostname(target_name)
         self.archive_name = ("insights-%s-%s" %
                              (name,
                               time.strftime("%Y%m%d%H%M%S")))
-        self.archive_dir = self.create_archive_dir()
+        self.tree_dir = self.create_tree_dir()
         self.cmd_dir = self.create_command_dir()
         self.compressor = compressor
 
-    def create_archive_dir(self):
+    def create_tree_dir(self):
         """
         Create the archive dir
         """
-        archive_dir = os.path.join(self.tmp_dir, self.archive_name)
-        os.makedirs(archive_dir, 0o700)
-        return archive_dir
+        tree_dir = os.path.join(self.tree_tmp_dir, self.archive_name)
+        os.makedirs(tree_dir, 0o700)
+        return tree_dir
 
     def create_command_dir(self):
         """
         Create the "sos_commands" dir
         """
-        cmd_dir = os.path.join(self.archive_dir, "insights_commands")
+        cmd_dir = os.path.join(self.tree_dir, "insights_commands")
         os.makedirs(cmd_dir, 0o700)
         return cmd_dir
 
@@ -936,7 +956,7 @@ class InsightsArchive(object):
         """
         Returns the full archive path
         """
-        return os.path.join(self.archive_dir, path.lstrip('/'))
+        return os.path.join(self.tree_dir, path.lstrip('/'))
 
     def _copy_file(self, path):
         """
@@ -974,7 +994,7 @@ class InsightsArchive(object):
         """
         for directory in path:
             if os.path.isdir(path):
-                full_path = os.path.join(self.archive_dir, directory.lstrip('/'))
+                full_path = os.path.join(self.tree_dir, directory.lstrip('/'))
                 logger.debug("Copying %s to %s", directory, full_path)
                 shutil.copytree(directory, full_path)
             else:
@@ -989,39 +1009,38 @@ class InsightsArchive(object):
             "none": ""
         }.get(compressor, "z")
 
-    def create_tar_file(self, full_archive=False):
+    def create_tar_file(self):
         """
         Create tar file to be compressed
         """
-        tar_file_name = os.path.join(self.tmp_dir, self.archive_name)
+        tar_file_name = os.path.join(self.tar_tmp_dir, self.archive_name)
         ext = "" if self.compressor == "none" else ".%s" % self.compressor
         tar_file_name = tar_file_name + ".tar" + ext
-        logger.debug("Tar File: " + tar_file_name)
-        subprocess.call(shlex.split("tar c%sfS %s -C %s ." % (
+        tar_cmd = "tar c%sfS %s -C %s ." % (
             self.get_compression_flag(self.compressor),
             tar_file_name,
-            # for the docker "uber archive,"use archive_dir
-            #   rather than tmp_dir for all the files we tar,
-            #   because all the individual archives are in there
-            self.tmp_dir if not full_archive else self.archive_dir)),
+            self.tree_tmp_dir)
+        logger.debug("Tar File: " + tar_file_name)
+        logger.debug("Tar cmd: %s" % tar_cmd)
+        subprocess.call(shlex.split(tar_cmd),
             stderr=subprocess.PIPE)
-        self.delete_archive_dir()
+        self.delete_tree_tmp_dir()
         logger.debug("Tar File Size: %s", str(os.path.getsize(tar_file_name)))
         return tar_file_name
 
-    def delete_tmp_dir(self):
+    def delete_tar_tmp_dir(self):
         """
-        Delete the entire tmp dir
+        Delete the entire tar tmp dir
         """
-        logger.debug("Deleting: " + self.tmp_dir)
-        shutil.rmtree(self.tmp_dir, True)
+        logger.debug("Deleting: " + self.tar_tmp_dir)
+        shutil.rmtree(self.tar_tmp_dir, True)
 
-    def delete_archive_dir(self):
+    def delete_tree_tmp_dir(self):
         """
-        Delete the entire archive dir
+        Delete the entire tree tmp dir
         """
-        logger.debug("Deleting: " + self.archive_dir)
-        shutil.rmtree(self.archive_dir, True)
+        logger.debug("Deleting: " + self.tree_tmp_dir)
+        shutil.rmtree(self.tree_tmp_dir, True)
 
     def add_to_archive(self, spec):
         '''
@@ -1064,7 +1083,8 @@ def _do_upload(pconn, tar_file, logging_name, collection_duration, result):
             return result
         elif upload.status_code == 412:
             pconn.handle_fail_rcs(upload)
-            return dict(failed=True, msg="looks like it failed: %s, %s" % (rc, tar_file))
+            return dict(failed=True,
+                        msg="Failed to upload %s, http status 412" % tar_file)
         else:
             logger.error("Upload attempt %d of %d failed! Status Code: %s",
                          tries + 1, InsightsClient.options.retries, upload.status_code)
@@ -1074,14 +1094,14 @@ def _do_upload(pconn, tar_file, logging_name, collection_duration, result):
                 time.sleep(constants.sleep_time)
             else:
                 logger.error("All attempts to upload have failed!")
-                logger.error("Please see %s for additional information",
-                             constants.default_log_file)
-                return dict(failed=True, msg="looks like it failed: %s, %s" % (rc, tar_file))
-    return dict(failed=True, msg="looks like it failed: %s, %s" % (rc, tar_file))
+                return dict(failed=True,
+                            msg="Failed to upload (%s times) %s" % (tries + 1, tar_file))
+    return dict(failed=True,
+                msg="Failed to upload (%s times) %s" % (tries + 1, tar_file))
 
 def _delete_archive(archive):
-    #archive.delete_tmp_dir()
-    pass
+    #archive.delete_tar_tmp_dir()
+    archive.delete_tree_tmp_dir()
 
 class ActionModule(ActionBase):
 
