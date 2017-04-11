@@ -19,7 +19,8 @@ If you know what Insights is, and would like to try out this role, but need some
 Requirements
 ------------
 
-The Ansible control machine must have the 'tar' command and the 'file' command installed.
+The Ansible control machine must have the 'tar' and 'file' commands installed, as well as the
+Python package 'requests' installed.
 
 The Target machines require no additional software installed.
 
