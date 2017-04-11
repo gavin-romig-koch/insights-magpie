@@ -27,6 +27,7 @@ import shlex
 import logging
 import six
 import copy
+import glob
 from tempfile import NamedTemporaryFile
 
 OLD_STYLE_ARCHIVE = True
@@ -354,7 +355,6 @@ def _expand_paths(path):
     """
     Expand wildcarded paths
     """
-    import re
     dir_name = os.path.dirname(path)
     paths = []
     logger.debug("Attempting to expand %s", path)
@@ -471,7 +471,6 @@ class DataCollector(object):
         '''
         Grab globs of things
         '''
-        import glob
         some_globs = glob.glob(spec['glob'])
         if not some_globs:
             return []
@@ -614,10 +613,6 @@ def magpie_facts(module):
     return dc.done(specs, None)
 
 def main():
-    import yaml
-    print(yaml.dump(magpie_facts(None),default_flow_style=False))
-
-def ansible_main():
     module = AnsibleModule(
         argument_spec = dict(
         ),
@@ -5387,7 +5382,7 @@ from ansible.module_utils.basic import *
 from ansible.module_utils.facts import *
 
 if __name__ == '__main__':
-    ansible_main()
+    main()
 
 
 

@@ -1,5 +1,13 @@
 
 
+- reorganize rule results to be more meaningfull
+   right now they are exactly what the upload returns
+   they can be better organized
+- test the case that the control is also the target
+- the pip module python-magic doesn't have and 'open' attribute that the action plugin needs
+    change the code to just always use plan b.
+    Ansible itself seems to use a variant of plan b.
+    rename plan b to just get_mime_type.
 - RPM installation of skelleton that installs scripts that act like current
   client, but actually use magpie
 - download specs file from server, look for specs file on target machine and
@@ -12,20 +20,26 @@
     - read the current uploader.json and produce the action and library module
     - also have a mechinism for includeing arbitrary but idiomatic python to
         collect arbitrary facts.
-- run the ansible module testing thing
-- test with ansible devel branch and ansible shipped on RHEL
-- need to be sure that all the imports used are just from the standard
-   python library
-  - virtualenv
-- add comparison to last run to test.sh
-- add comparison of 'skipped' to test.sh
-- add standard testing across the board
+- add testing to compare archive created to archive created by original client
+  - add comparison to last run to test.sh
+  - add comparison of 'skipped' to test.sh
+- add testing to compare rule hits produced by old client and this client
 - fix documentation for both modules
 - fact name should be based on spec name, not archive file name
+  the fact names used to return data from the target to the control machine
+    are variations of 'magpie_' + <archive file name where data is to go>
+    this should be changed to 'magpie_' + spec_name so that they are
+    easier to read
+    - in order to do this for old-style specs, we have to map old style specs
+      into new style specs,
+      - if the old style spec doesn't have a coorisponding new style spec,
+        which probabably never happens because of the way we create the specs
+        file, though may happen for specs read from disk,
+        just use the last name in the archive file name
 - fix _make_sed_cmd to check if default_sed_file exists, use it if it does,
      but use constant command line if it does not
 - split into two differently named modules
-  - come up with names for both modules
+  - come up with names for both modules (insights and magpie)
   - one collects but doesn't send to red hat
      this one only outputs collected facts
   - one runs the collector and sends to red hat
@@ -52,8 +66,6 @@
     commands are running, and then ships that log back with the archive.
     So during fact collection, log stuff to ansible normally, and then capture those
     logs in the action_plugin, and put them in the archive.
-- get rid of the ansible_main vs main in library/main
-- output collected facts as well as rule results
 - take config information from module options
    - correct the ansible argument parser in library
 - add registration to magpie
