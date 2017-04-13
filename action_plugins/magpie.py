@@ -52,7 +52,7 @@ class constants(object):
     default_conf_file_name = app_name + '.conf'
     default_conf_file = os.path.join(default_conf_dir, default_conf_file_name)
     default_sed_file = os.path.join(default_conf_dir, '.exp.sed')
-    default_ca_file = "false" #os.path.join(default_conf_dir, 'cert-api.access.redhat.com.pem')
+    default_ca_file = "auto" #os.path.join(default_conf_dir, 'cert-api.access.redhat.com.pem')
     base_url = 'cert-api.access.redhat.com/r/insights'
     collection_rules_file = os.path.join(default_conf_dir, '.cache.json')
     collection_fallback_file = os.path.join(default_conf_dir, '.fallback.json')
@@ -185,6 +185,12 @@ def magic_plan_b(filename):
 class DefaultArgument:
     pass
 
+possible_CA_VERIFY_files = [
+    "/etc/rhsm/ca/redhat-uep.pem",
+    "/etc/redhat-access-insights/cert-api.access.redhat.com.pem",
+    "/etc/insights-client/cert-api.access.redhat.com.pem",
+]
+
 class InsightsConnection(object):
 
     """
@@ -201,6 +207,19 @@ class InsightsConnection(object):
             self.cert_verify = False
         elif self.cert_verify.lower() == 'true':
             self.cert_verify = True
+        elif self.cert_verify.lower() == 'auto':
+            # check the 'usual' places for a portal verify cert
+            for filename in possible_CA_VERIFY_files:
+                try:
+                    open(filename)
+                    self.cert_verify = filename
+                    break
+                except:
+                    pass
+            # if we are still 'auto' then none of the usual places worked, so don't verify
+            if self.cert_verify.lower() == 'auto':
+                self.cert_verify = False
+
 
         protocol = "https://"
         insecure_connection = InsightsClient.config.getboolean(APP_NAME,
@@ -252,6 +271,7 @@ class InsightsConnection(object):
         session.verify = self.cert_verify
         session.proxies = self.proxies
         session.trust_env = False
+        logger.debug("Session Verify Cert: %s" % session.verify)
         if self.proxy_auth:
             # HACKY
             try:
@@ -909,15 +929,15 @@ class InsightsArchive(object):
         Once all the data is collected for all specs, a tar file is created from the directory tree,
         after which the directory tree is deleted.
 
-        The name of the directory tree and the main name of the tar file are the same: 
+        The name of the directory tree and the main name of the tar file are the same:
         **archive_name** which needs to follow a predictable pattern so the Insights Server can
         parse it.
 
         To prevent attacks based on being able to guess **archive_name**, both the directory
-        tree and the actual tar file are created in mkdtemp created directories.  To keep 
-        compatibility with the archives expected by the Insights server, the archive tar 
+        tree and the actual tar file are created in mkdtemp created directories.  To keep
+        compatibility with the archives expected by the Insights server, the archive tar
         command needs to start the archive with '.', all the file names stored in the archive start
-        with the directory '.', so the directory tree and archive itself must be in separate mkdtemp 
+        with the directory '.', so the directory tree and archive itself must be in separate mkdtemp
         directories:
 
         **tree_tmp_dir** is the mkdtemp directory which holds the directory tree, and only the
